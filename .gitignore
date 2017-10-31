@@ -3,3 +3,4 @@ wmap_noby_api/bin/
 wmap_noby_api/obj/
 wmap_noby_api/cls_connect_string.cs
 wmap_noby_api/sql_source.cs
+.vs/

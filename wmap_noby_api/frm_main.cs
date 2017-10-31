@@ -28,39 +28,60 @@ namespace wmap_noby_api
         //投稿ボタン
         private void btn_push_Click(object sender, EventArgs e)
         {
-            if (txt_post.Text == "")
+            if (txt_post.Text.Replace("\n","") == "")
             {
                 MessageBox.Show("テキストを入力してください。");
                 return;
             }
 
-            string url = url_fomatter(txt_appkey.Text, txt_post.Text);
-
-            string json = new HttpClient().GetStringAsync(url).Result;
-            JObject jobj = JObject.Parse(json);
-
-            string nobyText = (string)((jobj["text"] as JValue).Value);
-            string nobyCommand = (string)((jobj["commandId"] as JValue).Value);
-
-            //チャット結果を表示
-            txt_noby_chat.AppendText(chat_formatter(txt_post.Text,nobyText));
-
-            //最後の行にフォーカス
-            txt_noby_chat.SelectionStart = txt_noby_chat.Text.Length;
-            txt_noby_chat.Focus();
-            txt_noby_chat.ScrollToCaret();
-
-            //各パラメータを表示
-            txt_url.Text = url;
-            txt_json.Text = jobj.ToString();
-            txt_command.Text = nobyCommand;
-
-            if(!Regex.IsMatch(txt_command.Text, "^wmap_*"))
+            if(txt_appkey.Text == "")
             {
+                MessageBox.Show("Appkeyを入力してください。");
                 return;
             }
 
-            cmd_exe(cmd_text_get(nobyCommand));
+            try
+            {
+                //GETリクエスト用URL生成
+                string url = url_fomatter(txt_appkey.Text, txt_post.Text.Replace("\n", ""));
+
+                //GETリクエストを実行しjsonを受け取りパースする
+                string json = new HttpClient().GetStringAsync(url).Result;
+                JObject jobj = JObject.Parse(json);
+
+                //jsonから必要な情報だけ取得
+                string nobyText = (string)((jobj["text"] as JValue).Value);
+                string nobyCommand = (string)((jobj["commandId"] as JValue).Value);
+
+                //Appkeyが正しくない場合のバグが内臓されています。//
+                //解決策模索中・・・。                            //
+
+                //チャット結果を表示
+                txt_noby_chat.AppendText(chat_formatter(txt_post.Text.Replace("\n", ""), nobyText));
+
+                //最後の行にフォーカス
+                txt_noby_chat.SelectionStart = txt_noby_chat.Text.Length;
+                txt_noby_chat.Focus();
+                txt_noby_chat.ScrollToCaret();
+
+                //各パラメータを表示
+                txt_url.Text = url;
+                txt_json.Text = jobj.ToString();
+                txt_command.Text = nobyCommand;
+
+                //wmap系コマンドIDの場合のみ先に進む
+                if (!Regex.IsMatch(txt_command.Text, "^wmap_*"))
+                {
+                    return;
+                }
+
+                //コマンドを実行
+                cmd_exe(cmd_text_get(nobyCommand));
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
 
         //検索ボタン
